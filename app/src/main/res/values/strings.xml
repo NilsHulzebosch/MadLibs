@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Mad Libs</string>
+    <string name="content">mad libs</string>
+    <string name="start">Get started!</string>
+    <string name="explanation">Welcome to Mad Libs!
+        I will ask you to fill in words to complete a story.
+        You won\'t be able to see the whole story until you are done filling in all the missing words.
+        That\'s part of the fun. Click below to get started.</string>
+    <string name="explanation2">Fill in the words to complete the story!</string>
+    <string name="ok">OK</string>
+    <string name="title">Your Mad Lib story!</string>
+    <string name="again">Another story</string>
+
+</resources>
