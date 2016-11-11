@@ -7,53 +7,41 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import java.io.InputStream;
 
 public class FillInWordsActivity extends AppCompatActivity {
 
-    InputStream ins;
-    Story story;
-    String placeholder;
-    int placeholderCount;
-    int remainingPlaceholderCount;
+    public InputStream ins;
+    public Story story;
+    public String placeholder;
+    public int remainingPlaceholderCount;
+
+    public static String suggestion = "Please enter a";
+    public static String remainingWordCount = " words remaining...";
+    public static String OneWordRemaning = " word remaining...";
+
+    public TextView wordTypeTV;
+    public TextView wordCountTV;
+    public EditText stringET;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_fill_in_words);
 
-        // first check whether there is a saved instance state, if so restore it
         if (savedInstanceState != null) {
-            // continue with asking words
-            TextView failTV = (TextView) findViewById(R.id.count);
-            failTV.setText("fail");
+            // first check whether there is a saved instance state, if so restore it
+            story = (Story) savedInstanceState.getSerializable("story");
+            initializeTextObjects();
+            showNextWordAndCount();
         } else {
-
-            Bundle extras = getIntent().getExtras();
-            if (extras != null) {
-                // else check whether the bundle is empty, if this is not the case,
-                // a story was initialized before
-                //String savedWord = extras.getString("word", "perpendicularity");
-                String savedWord = extras.getString("story", "perpendicularity");
-
-                TextView messageTV = (TextView) findViewById(R.id.count);
-                String text = "The word is: " + savedWord;
-                messageTV.setText(text);
-            } else {
-                // if the bundle was empty, we have to initialize the story
-                // get InputStream, Story and parameters
-                ins = getResources().openRawResource(
-                        getResources().getIdentifier("madlib0_simple", "raw", getPackageName()));
-
-                story = new Story(ins);
-                placeholder = story.getNextPlaceholder();
-                placeholderCount = story.getPlaceholderCount();
-                remainingPlaceholderCount = story.getPlaceholderRemainingCount();
-                TextView placeholderTV = (TextView) findViewById(R.id.editText);
-                placeholderTV.setText(placeholder);
-            }
-
+            // else initialize the story by choosing a random text file, passing it
+            // as InputStream to create a new Story object
+            ins = getResources().openRawResource(
+                    getResources().getIdentifier(chooseRandomStory(), "raw", getPackageName()));
+            story = new Story(ins);
+            initializeTextObjects();
+            showNextWordAndCount();
         }
     }
 
@@ -61,49 +49,101 @@ public class FillInWordsActivity extends AppCompatActivity {
     // this method saves the state of the program
     public void onSaveInstanceState(Bundle outState) {
         outState.putBoolean("test", true);
-        //outState.putSerializable("story", story);
+        outState.putSerializable("story", story); // pass the object so it can be re-used
         super.onSaveInstanceState(outState);
     }
 
-    // when the button is pressed, check if something is filled in
-    // if there is, save the word and go on, else ask again using a Toast
-    public void saveWord(View view) {
-        EditText stringET = (EditText) findViewById(R.id.editText);
-        String word = stringET.getText().toString();
+    // checks if a char is a vowel
+    public static boolean isVowel(char c) {
+        return "AEIOUaeiou".indexOf(c) != -1;
+    }
 
-        if ( !(word.length() == 0) && remainingPlaceholderCount > 0) {
-            Intent goToWords = new Intent(this, FillInWordsActivity.class);
-            goToWords.putExtra("word", word);
-            goToWords.putExtra("story", story);
-            startActivity(goToWords);
-        } else if ( !(word.length() == 0) ) {
+    // initializes the text objects (called in onCreate)
+    public void initializeTextObjects() {
+        wordTypeTV = (TextView) findViewById(R.id.wordtype);
+        wordCountTV = (TextView) findViewById(R.id.wordcount);
+        stringET = (EditText) findViewById(R.id.editText);
+    }
+
+    /* The visual feedback of the program:
+     * Shows hint in EditText, type of word in TextView and remaining word count in TextView.
+     * Also clears user input after each round.
+     */
+    public void showNextWordAndCount() {
+        stringET.getText().clear(); // clear the user input
+
+        placeholder = story.getNextPlaceholder();
+        String n = " ";
+        if ( isVowel(placeholder.charAt(0)) ) {
+            n = "n ";
+        }
+        String suggestedText = suggestion + n + placeholder;
+        wordTypeTV.setText(suggestedText);
+
+        stringET.setHint(placeholder); // set hint for the user
+
+        remainingPlaceholderCount = story.getPlaceholderRemainingCount();
+        String countStr = Integer.toString(remainingPlaceholderCount);
+        String suggestedCount;
+        if (remainingPlaceholderCount > 1) {
+            suggestedCount = countStr + remainingWordCount;
+        } else {
+            suggestedCount = countStr + OneWordRemaning;
+        }
+        wordCountTV.setText(suggestedCount);
+    }
+
+    /* The action of the program: when the button is pressed, check if something is filled in.
+     * If there is, save the word and show next placeholder, else ask again using a Toast.
+     * Continue until all words are asked. Then go to ShowStoryActivity using an Intent.
+     */
+    public void saveWord(View view) {
+        String filledInWord = stringET.getText().toString(); // turn user input into a string
+
+        if (!(filledInWord.length() == 0) && remainingPlaceholderCount > 1 ) {
+            story.fillInPlaceholder(filledInWord); // fill in the word in the story object
+            showNextWordAndCount();
+        } else if ( !(filledInWord.length() == 0) ) {
+            story.fillInPlaceholder(filledInWord); // fill in the word in the story object
             Intent goToStory = new Intent(this, ShowStoryActivity.class);
-            goToStory.putExtra("word", word);
-            goToStory.putExtra("story", story);
+            goToStory.putExtra("story", story); // pas story object to next activity
             startActivity(goToStory);
+            finish();
         } else {
             Toast toast = Toast.makeText(this, "Please enter a word", Toast.LENGTH_SHORT);
             toast.show();
         }
+
+        motivateUser();
     }
 
+    // motivate the user using a few Toasts
+    public void motivateUser() {
+        Toast toast;
+        if (remainingPlaceholderCount == 10) {
+            toast = Toast.makeText(this, "You're doing great!", Toast.LENGTH_SHORT);
+            toast.show();
+        } else if (remainingPlaceholderCount == 6) {
+            toast = Toast.makeText(this, "A few more to go!", Toast.LENGTH_SHORT);
+            toast.show();
+        } else if (remainingPlaceholderCount == 3) {
+            toast = Toast.makeText(this, "Only three words left!", Toast.LENGTH_SHORT);
+            toast.show();
+        }
+    }
+
+    // this method randomly chooses one of the five possible stories
     public String chooseRandomStory() {
         String filename;
-        int random = (int) (Math.random() * 5); // take random var between 0 and 5
-        if(random == 0) {
-            filename = "madlib0_simple";
-
-        } else if(random == 1) {
-            filename = "madlib1_tarzan";
-
-        } else if(random == 2) {
-            filename = "madlib2_university";
-
+        int random = (int) (Math.random() * 5);
+        if(random == 4) {
+            filename = "madlib4_dance";
         } else if(random == 3) {
             filename = "madlib3_clothes";
-
+        } else if(random == 2) {
+            filename = "madlib2_university";
         } else {
-            filename = "madlib4_dance";
+            filename = "madlib1_tarzan";
         }
         return filename;
     }

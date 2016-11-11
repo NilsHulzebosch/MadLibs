@@ -12,21 +12,21 @@
 
     <TextView
         android:text="@string/title"
-        android:textSize="27sp"
+        android:textSize="23sp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="15dp"
+        android:layout_marginTop="5dp"
         android:id="@+id/title" />
 
     <TextView
-        android:textSize="16sp"
+        android:textSize="14sp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/title"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="25dp"
+        android:layout_marginTop="10dp"
         android:id="@+id/resultTextView" />
 
     <Button

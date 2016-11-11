@@ -14,16 +14,22 @@ public class ShowStoryActivity extends AppCompatActivity {
         setContentView(R.layout.activity_show_story);
 
         Bundle extras = getIntent().getExtras();
-        String savedWord = extras.getString("word", "perpendicularity");
-
+        Story story = (Story) extras.getSerializable("story");
         TextView messageTV = (TextView) findViewById(R.id.resultTextView);
-        String text = "The word is: " + savedWord;
-        messageTV.setText(text);
+        if (story != null) {
+            String storyStr = story.toString();
+            messageTV.setText(storyStr);
+        } else {
+            String errorStr = "Something went wrong. Please try again.";
+            messageTV.setText(errorStr);
+        }
     }
 
+    // when the button is pressed, start over FillInWordsActivity for a new story
     public void newWord(View view) {
         Intent goToWord = new Intent(this, FillInWordsActivity.class);
         startActivity(goToWord);
+        finish();
     }
 }
 
